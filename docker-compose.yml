@@ -1,8 +1,27 @@
-version: '3'
-services:
-  postman:
-    image: jlesage/postman
-    container_name: postman
-    ports:
-      - "5800:5800"
+version: '3.8'
 
+services:
+  app:
+    build: .
+    restart: always
+    environment:
+      SPRING_DATASOURCE_URL: "jdbc:mysql://mysql-26154030-caoky-de8f.g.aivencloud.com:22423/defaultdb"
+      SPRING_DATASOURCE_USERNAME: "avnadmin"
+      SPRING_DATASOURCE_PASSWORD: "AVNS_rK2vnAik3WpBICGT3ZS"
+
+      
+      
+      # Nếu muốn Hibernate tự tạo/ cập nhật bảng:
+      SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
+
+      # Các biến môi trường khác cho mail, file upload,...
+      SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE: 20MB
+      SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE: 20MB
+      SPRING_MAIL_HOST: smtp.gmail.com
+      SPRING_MAIL_PORT: 587
+      SPRING_MAIL_USERNAME: "caoky.sonha@gmail.com"
+      SPRING_MAIL_PASSWORD: "iisrdsbtaljjucag"
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH: "true"
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE: "true"
+    ports:
+      - "8080:8080"
