@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Realtime Chat</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #chatBox {
+            width: 60%;
+            max-width: 600px;
+            margin: 20px auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            height: 400px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        .message {
+            max-width: 70%;
+            padding: 10px;
+            border-radius: 10px;
+            margin: 5px 0;
+            word-wrap: break-word;
+        }
+        .sent {
+            background-color: #007bff;
+            color: white;
+            align-self: flex-end;
+        }
+        .received {
+            background-color: #f1f1f1;
+            align-self: flex-start;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Chat</h2>
+<label>Choose User:</label>
+<select id="userSelect" onchange="loadChatHistory()">
+    <option value="1">Alice (User 1)</option>
+    <option value="2">Bob (User 2)</option>
+</select>
+<input type="text" id="messageInput" placeholder="Type your message...">
+<button onclick="sendMessage()">Send</button>
+
+<h3>Messages:</h3>
+<div id="chatBox"></div>
+
+<script>
+    var socket = new SockJS('/ws');
+    var stompClient = Stomp.over(socket);
+    var messages = [];
+    var currentUser = document.getElementById("userSelect").value;
+
+    stompClient.connect({}, function(frame) {
+        console.log('Connected: ' + frame);
+
+        stompClient.subscribe('/topic/chat', function(response) {
+            var message = JSON.parse(response.body);
+            messages.push(message);
+            updateChat();
+        });
+
+        loadChatHistory();
+    });
+
+    function sendMessage() {
+        var senderId = document.getElementById("userSelect").value;
+        var receiverId = senderId == "1" ? "2" : "1";
+        var content = document.getElementById("messageInput").value;
+
+        var chatMessage = {
+            senderId: senderId,
+            receiverId: receiverId,
+            content: content
+        };
+
+        stompClient.send("/app/sendMessage", {}, JSON.stringify(chatMessage));
+        document.getElementById("messageInput").value = "";
+    }
+
+    function loadChatHistory() {
+        var senderId = document.getElementById("userSelect").value;
+        var receiverId = senderId == "1" ? "2" : "1";
+
+        fetch(`/api/chat/messages/${senderId}/${receiverId}`)
+            .then(response => response.json())
+            .then(data => {
+                messages = data;
+                updateChat();
+            });
+    }
+
+    function updateChat() {
+        var chatBox = document.getElementById("chatBox");
+        chatBox.innerHTML = "";
+        currentUser = document.getElementById("userSelect").value;
+
+        messages.forEach(message => {
+            var messageElement = document.createElement("div");
+            messageElement.classList.add("message");
+            messageElement.textContent = `User ${message.senderId}: ${message.content}`;
+
+            if (message.senderId == currentUser) {
+                messageElement.classList.add("sent");
+            } else {
+                messageElement.classList.add("received");
+            }
+
+            chatBox.appendChild(messageElement);
+        });
+
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+</script>
+
+</body>
+</html>

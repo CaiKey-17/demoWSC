@@ -1,0 +1,8 @@
+version: '3'
+services:
+  postman:
+    image: jlesage/postman
+    container_name: postman
+    ports:
+      - "5800:5800"
+
